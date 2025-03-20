@@ -1,12 +1,208 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Anonymous Submission Portal</title>
+    <title>AutoC2Q Anonymous Submission Portal</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f9f9f9;
+            margin: 0;
+            padding: 20px;
+            text-align: center;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        #figure-container {
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            margin-bottom: 30px;
+            text-align: left;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        #template-figure {
+            margin-right: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        #figure-container p {
+            margin: 0;
+            font-size: 16px;
+            color: #555;
+        }
+        #figure-container pre {
+            background-color: #f4f4f4;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: Consolas, monospace;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+        .upload-section, .status-section {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            margin: 20px auto;
+            width: 80%;
+            max-width: 500px;
+            text-align: left;
+        }
+        .upload-section h2, .status-section h2 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+        input[type="file"], input[type="text"], button {
+            padding: 10px 15px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .token-box, .status-box {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #ccc;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            display: inline-block;
+            width: 100%;
+            text-align: left;
+        }
+        .token-box strong, .status-box strong {
+            color: #333;
+        }
+    </style>
 </head>
 <body>
-    <h1>Anonymous Submission Portal</h1>
-    <p>This page is under development.</p>
+    <h1>AutoC2Q Anonymous Submission Portal</h1>
+    
+    <!-- Placeholder for Figure and Caption -->
+    <div id="figure-container">
+        <img id="template-figure" src="table.png" alt="Template Figure" width="300">
+        <div>
+            <p><strong>Caption:</strong> The figure represents a template for a JSON file. Each line in the figure corresponds to a key-value pair in the JSON format. For example, the first three lines should be represented in JSON as:</p>
+            <pre>
+{
+    "Algorithm Name": "Shor’s Algorithm",
+    "Description": "A quantum algorithm for integer factorization.",
+    "Complexity": "Polynomial time."
+}
+            </pre>
+            <p>Ensure that each line in the figure is converted into a key-value pair in the JSON file.</p>
+        </div>
+    </div>
+    
+    <!-- File Upload Section -->
+    <div class="upload-section">
+        <h2>File Upload</h2>
+        <input type="file" id="fileInput" accept="application/json">
+        <button onclick="uploadFile()">Upload JSON</button>
+        <div id="token-display" class="token-box"></div>
+    </div>
+    
+    <!-- Status Check Section -->
+    <div class="status-section">
+        <h2>Status Check</h2>
+        <input type="text" id="tokenInput" placeholder="Enter Token">
+        <button onclick="checkStatus()">Check Status</button>
+        <div id="status-display" class="status-box"></div>
+    </div>
+    
+    <script>
+        const BACKEND_URL = "http://127.0.0.1:5000"; // Ensure this matches your Flask server
+
+        async function uploadFile() {
+            const fileInput = document.getElementById("fileInput");
+            if (!fileInput.files.length) {
+                alert("Please select a file.");
+                return;
+            }
+            
+            let formData = new FormData();
+            formData.append("file", fileInput.files[0]);
+            
+            try {
+                console.log("Uploading file...");
+                let response = await fetch(`${BACKEND_URL}/upload`, {
+                    method: "POST",
+                    body: formData,
+                    mode: 'cors',  // Explicitly set the mode to 'cors'
+                    headers: {
+                        'Accept': 'application/json',
+                    },
+                });
+                console.log("Response received:", response);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+
+                let result = await response.json();
+                console.log("Result:", result);
+
+                if (result.token) {
+                    document.getElementById("token-display").innerHTML = `<strong>Your token is:</strong> ${result.token}`;
+                } else {
+                    document.getElementById("token-display").innerText = "Error: No token received from the server.";
+                }
+            } catch (error) {
+                console.error("Error uploading file:", error);
+                document.getElementById("token-display").innerText = "Error: Failed to connect to the server. Check the console for details.";
+            }
+        }
+
+        async function checkStatus() {
+            let token = document.getElementById("tokenInput").value;
+            if (!token) {
+                alert("Please enter a token.");
+                return;
+            }
+            
+            try {
+                console.log("Checking status for token:", token);
+                let response = await fetch(`${BACKEND_URL}/status?token=${token}`);
+                console.log("Response received:", response);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+
+                let result = await response.json();
+                console.log("Result:", result);
+
+                if (result.status === "Not Found") {
+                    document.getElementById("status-display").innerText = "Error: Token not found. Please check the token and try again.";
+                } else {
+                    document.getElementById("status-display").innerText = `Status: ${result.status}`;
+                }
+            } catch (error) {
+                console.error("Error checking status:", error);
+                document.getElementById("status-display").innerText = "Error: Failed to connect to the server. Check the console for details.";
+            }
+        }
+    </script>
 </body>
 </html>
