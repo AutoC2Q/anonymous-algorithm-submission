@@ -134,6 +134,45 @@
     <script>
         const BACKEND_URL = "https://AutoC2Q.pythonanywhere.com"; // Ensure this matches your Flask server
 
+        // async function uploadFile() {
+        //     const fileInput = document.getElementById("fileInput");
+        //     if (!fileInput.files.length) {
+        //         alert("Please select a file.");
+        //         return;
+        //     }
+            
+        //     let formData = new FormData();
+        //     formData.append("file", fileInput.files[0]);
+            
+        //     try {
+        //         console.log("Uploading file...");
+        //         let response = await fetch(`${BACKEND_URL}/upload`, {
+        //             method: "POST",
+        //             body: formData,
+        //             mode: 'cors',  // Explicitly set the mode to 'cors'
+        //             headers: {
+        //                 'Accept': 'application/json',
+        //             },
+        //         });
+        //         console.log("Response received:", response);
+
+        //         if (!response.ok) {
+        //             throw new Error(`HTTP error! Status: ${response.status}`);
+        //         }
+
+        //         let result = await response.json();
+        //         console.log("Result:", result);
+
+        //         if (result.token) {
+        //             document.getElementById("token-display").innerHTML = `<strong>Your token is:</strong> ${result.token}`;
+        //         } else {
+        //             document.getElementById("token-display").innerText = "Error: No token received from the server.";
+        //         }
+        //     } catch (error) {
+        //         console.error("Error uploading file:", error);
+        //         document.getElementById("token-display").innerText = "Error: Failed to connect to the server. Check the console for details.";
+        //     }
+        // }
         async function uploadFile() {
             const fileInput = document.getElementById("fileInput");
             if (!fileInput.files.length) {
@@ -149,30 +188,33 @@
                 let response = await fetch(`${BACKEND_URL}/upload`, {
                     method: "POST",
                     body: formData,
-                    mode: 'cors',  // Explicitly set the mode to 'cors'
+                    mode: 'cors',
                     headers: {
                         'Accept': 'application/json',
                     },
                 });
-                console.log("Response received:", response);
-
+                
+                console.log("Full response:", response);
+                
                 if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
+                    const errorText = await response.text();
+                    throw new Error(`Server error (${response.status}): ${errorText}`);
                 }
-
+        
                 let result = await response.json();
-                console.log("Result:", result);
-
+                console.log("Full result:", result);
+        
                 if (result.token) {
                     document.getElementById("token-display").innerHTML = `<strong>Your token is:</strong> ${result.token}`;
                 } else {
-                    document.getElementById("token-display").innerText = "Error: No token received from the server.";
+                    throw new Error("No token received from the server");
                 }
             } catch (error) {
-                console.error("Error uploading file:", error);
-                document.getElementById("token-display").innerText = "Error: Failed to connect to the server. Check the console for details.";
+                console.error("Detailed upload error:", error);
+                document.getElementById("token-display").innerText = `Upload failed: ${error.message}`;
             }
         }
+        
 
         async function checkStatus() {
             let token = document.getElementById("tokenInput").value;
